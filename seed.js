@@ -11,6 +11,7 @@ const MONGO_URI = process.env.mongodb_uri || 'mongodb://localhost:27017/ecommerc
 
 const seedDatabase = async () => {
     try {
+        // Use the fallback MONGO_URI if the env variable isn't picking up
         await mongoose.connect(MONGO_URI);
         console.log("Connected to MongoDB...");
 
@@ -29,6 +30,24 @@ const seedDatabase = async () => {
         const products = [];
         for (let i = 0; i < 50; i++) {
             const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            
+            // Create a randomized set of reviews for each product
+            const fakeReviews = [
+                { 
+                    user: faker.person.firstName(), 
+                    rating: Math.floor(Math.random() * 2) + 4, // Generates 4 or 5
+                    comment: faker.lorem.sentence() 
+                },
+                { 
+                    user: faker.person.firstName(), 
+                    rating: Math.floor(Math.random() * 3) + 3, // Generates 3, 4, or 5
+                    comment: faker.lorem.sentence() 
+                }
+            ];
+
+            // Manually calculate avgRating for the seed data
+            const totalRating = fakeReviews.reduce((sum, rev) => sum + rev.rating, 0);
+            const average = (totalRating / fakeReviews.length).toFixed(1);
 
             products.push({
                 name: faker.commerce.productName(),
@@ -36,12 +55,14 @@ const seedDatabase = async () => {
                 price: parseFloat(faker.commerce.price({ min: 10, max: 1000 })),
                 inventoryCount: Math.floor(Math.random() * 100),
                 category: randomCategory._id,
-                image: faker.image.url()
+                image: faker.image.url(),
+                allReviews: fakeReviews,
+                avgRating: Number(average) 
             });
         }
 
         await Product.insertMany(products);
-        console.log("50 Products seeded successfully!");
+        console.log("50 Products seeded successfully with reviews and ratings!");
 
         await mongoose.connection.close();
         console.log("Connection closed.");
