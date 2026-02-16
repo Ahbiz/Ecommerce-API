@@ -8,12 +8,12 @@ const transactionSchema = new mongoose.Schema({
     },
     transactionId: {
         type: Number
-    }, // Flutterwave's internal ID
+    }, 
     tx_ref: {
         type: String,
         required: true,
         unique: true
-    }, // Your unique reference
+    }, 
     amount: {
         type: Number,
         required: true

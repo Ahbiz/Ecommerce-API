@@ -12,14 +12,12 @@ const flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_K
 export const initiatePayment = asyncHandler(async (req, res) => {
     const userId = req.user;
 
-    // 1. Get user details
     const user = await User.findById(userId);
     if (!user) {
         res.status(404);
         throw new Error("User not found");
     }
 
-    // 2. Get cart details and calculate total
     const cart = await Cart.findOne({ user: userId }).populate('items.product');
     if (!cart || cart.items.length === 0) {
         res.status(400);
@@ -32,7 +30,6 @@ export const initiatePayment = asyncHandler(async (req, res) => {
 
     const tx_ref = `tx-${Date.now()}-${userId}`;
 
-    // 3. Create a pending record in your DB
     await Transaction.create({
         user: userId,
         tx_ref,
@@ -41,7 +38,6 @@ export const initiatePayment = asyncHandler(async (req, res) => {
         status: 'pending'
     });
 
-    // 4. Prepare Flutterwave payload
     const payload = {
         tx_ref,
         amount,
@@ -57,7 +53,7 @@ export const initiatePayment = asyncHandler(async (req, res) => {
         }
     };
 
-    // 5. Generate Payment Link
+    
     const response = await fetch('https://api.flutterwave.com/v3/payments', {
         method: 'POST',
         headers: {
@@ -87,7 +83,6 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         const response = await flw.Transaction.verify({ id: transaction_id });
 
         if (response.data.status === "successful") {
-            // Find the transaction in our DB
             const transaction = await Transaction.findOne({ tx_ref });
 
             if (!transaction) {
@@ -95,14 +90,11 @@ export const verifyPayment = asyncHandler(async (req, res) => {
                 throw new Error("Transaction record not found");
             }
 
-            // Verify amount and currency
             if (response.data.amount === transaction.amount && response.data.currency === transaction.currency) {
-                // Update transaction status
                 transaction.status = 'successful';
                 transaction.transactionId = transaction_id;
                 await transaction.save();
 
-                // Empty the user's cart after successful payment
                 await Cart.findOneAndDelete({ user: transaction.user });
 
                 return res.status(200).json({
@@ -118,7 +110,6 @@ export const verifyPayment = asyncHandler(async (req, res) => {
             throw new Error("Payment not successful on Flutterwave");
         }
     } else {
-        // Update transaction to failed
         await Transaction.findOneAndUpdate({ tx_ref }, { status: 'failed' });
         res.status(400);
         throw new Error("Payment failed or cancelled");

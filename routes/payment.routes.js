@@ -5,6 +5,6 @@ import { protect } from '../middleware/auth.middleware.js';
 const router = express.Router();
 
 router.post('/initiate', protect, initiatePayment);
-router.get('/verify', verifyPayment); // Flutterwave redirects here with query params
+router.get('/verify', verifyPayment); 
 
 export default router;
