@@ -3,11 +3,8 @@ import { getProducts, addProductReview } from "../controllers/product.controller
 
 const router = express.Router();
 
-// GET all products (with filtering for Category, ID, and Rating)
 router.get("/", getProducts);
 
-// POST a new review to a specific product
-// Example URL: http://localhost:5000/api/products/6987aa.../reviews
-router.post("/:id/reviews", addProductReview);
+router.post("/:id/review", addProductReview);
 
 export default router;

@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import Product from './models/Product.model.js';
 import Category from './models/Category.model.js';
 import User from './models/User.model.js';
+import Cart from './models/Cart.model.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,12 +12,13 @@ const MONGO_URI = process.env.mongodb_uri || 'mongodb://localhost:27017/ecommerc
 
 const seedDatabase = async () => {
     try {
-        // Use the fallback MONGO_URI if the env variable isn't picking up
         await mongoose.connect(MONGO_URI);
         console.log("Connected to MongoDB...");
 
         await Category.deleteMany();
         await Product.deleteMany();
+        await User.deleteMany();
+        await Cart.deleteMany();
         console.log("Cleared old data.");
 
         const categories = await Category.insertMany([
@@ -27,25 +29,27 @@ const seedDatabase = async () => {
         ]);
         console.log("Categories created.");
 
+        const users = await User.insertMany([
+            { name: 'Test User', email: 'test@example.com', password: 'password123' }
+        ]);
+        console.log("User created. Use this ID in Postman:", users[0]._id);
+
         const products = [];
         for (let i = 0; i < 50; i++) {
             const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-            
-            // Create a randomized set of reviews for each product
+
             const fakeReviews = [
-                { 
-                    user: faker.person.firstName(), 
-                    rating: Math.floor(Math.random() * 2) + 4, // Generates 4 or 5
-                    comment: faker.lorem.sentence() 
+                {
+                    user: faker.person.firstName(),
+                    rating: Math.floor(Math.random() * 2) + 4,
+                    comment: faker.lorem.sentence()
                 },
-                { 
-                    user: faker.person.firstName(), 
-                    rating: Math.floor(Math.random() * 3) + 3, // Generates 3, 4, or 5
-                    comment: faker.lorem.sentence() 
+                {
+                    user: faker.person.firstName(),
+                    rating: Math.floor(Math.random() * 3) + 3,
+                    comment: faker.lorem.sentence()
                 }
             ];
-
-            // Manually calculate avgRating for the seed data
             const totalRating = fakeReviews.reduce((sum, rev) => sum + rev.rating, 0);
             const average = (totalRating / fakeReviews.length).toFixed(1);
 
@@ -57,7 +61,7 @@ const seedDatabase = async () => {
                 category: randomCategory._id,
                 image: faker.image.url(),
                 allReviews: fakeReviews,
-                avgRating: Number(average) 
+                avgRating: Number(average)
             });
         }
 

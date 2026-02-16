@@ -34,20 +34,17 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Product Image is required'],
     },
-    // NEW: Added Embedded Reviews
     allReviews: [{
         user: { type: String, required: true },
         rating: { type: Number, required: true, min: 1, max: 5 },
         comment: { type: String }
     }],
-    // NEW: Added avgRating field
     avgRating: {
         type: Number,
         default: 0
     }
 }, {
     timestamps: true,
-    // This allows virtuals to show up in Postman/JSON responses
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
@@ -55,7 +52,7 @@ const productSchema = new mongoose.Schema({
 productSchema.pre('save', function (next) {
     if (this.allReviews && this.allReviews.length > 0) {
         const total = this.allReviews.reduce((sum, review) => sum + review.rating, 0);
-        this.avgRating = Number(total / this.allReviews.length).toFixed(1); // Rounds to 1 decimal
+        this.avgRating = Number(total / this.allReviews.length).toFixed(1); 
     } else {
         this.avgRating = 0;
     }
